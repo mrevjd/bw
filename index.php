@@ -53,6 +53,45 @@ session_start();
         .interface-form button:hover {
             background: #45a049;
         }
+        .controls {
+            text-align: center;
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+        }
+        .control-button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .play-button {
+            background: #4CAF50;
+            color: white;
+        }
+        .pause-button {
+            background: #FFA000;
+            color: white;
+        }
+        .control-button:hover {
+            opacity: 0.9;
+        }
+        .control-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .status-text {
+            font-size: 0.9em;
+            font-weight: bold;
+            color: #666;
+            margin: 0px auto 10px auto;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -66,6 +105,15 @@ session_start();
     <div class="interface-info">
         Current interface: <strong id="currentInterface">Auto-detecting...</strong>
     </div>
+    <div class="controls">
+        <button id="playButton" class="control-button play-button" disabled>
+            ► Play
+        </button>
+        <button id="pauseButton" class="control-button pause-button">
+            ❚❚ Pause
+        </button>
+    </div>
+    <div class="status-text" id="statusText">Monitoring active</div>
     <div class="chart-container">
         <canvas id="bandwidthChart"></canvas>
     </div>
@@ -97,7 +145,7 @@ session_start();
             options: {
                 responsive: true,
                 animation: {
-                    duration: 0 // Disable animation for better performance
+                    duration: 0
                 },
                 interaction: {
                     intersect: false,
@@ -139,6 +187,18 @@ session_start();
             }
         });
 
+        // Monitoring state
+        let monitoringState = {
+            active: true,
+            intervalId: null,
+            lastData: null
+        };
+
+        // Control buttons
+        const playButton = document.getElementById('playButton');
+        const pauseButton = document.getElementById('pauseButton');
+        const statusText = document.getElementById('statusText');
+
         // Function to fetch data
         async function fetchData() {
             try {
@@ -156,6 +216,9 @@ session_start();
                     return;
                 }
 
+                // Store last data
+                monitoringState.lastData = data;
+
                 // Update interface display
                 document.getElementById('currentInterface').textContent = data.label;
 
@@ -171,16 +234,41 @@ session_start();
                     y: point[1]
                 }));
 
-                chart.update('none'); // Update without animation for better performance
+                chart.update('none');
             } catch (error) {
                 console.error('Error fetching data:', error);
                 document.getElementById('currentInterface').textContent = 'Error fetching data';
             }
         }
 
+        function startMonitoring() {
+            if (!monitoringState.active) {
+                monitoringState.active = true;
+                monitoringState.intervalId = setInterval(fetchData, 1000);
+                playButton.disabled = true;
+                pauseButton.disabled = false;
+                statusText.textContent = 'Monitoring active';
+            }
+        }
+
+        function pauseMonitoring() {
+            if (monitoringState.active) {
+                monitoringState.active = false;
+                clearInterval(monitoringState.intervalId);
+                playButton.disabled = false;
+                pauseButton.disabled = true;
+                statusText.textContent = 'Monitoring paused';
+            }
+        }
+
+
+        // Event listeners for control buttons
+        playButton.addEventListener('click', startMonitoring);
+        pauseButton.addEventListener('click', pauseMonitoring);
+
         // Initial fetch and setup interval
         fetchData();
-        setInterval(fetchData, 1000);
+        monitoringState.intervalId = setInterval(fetchData, 1000);
     </script>
 </body>
 </html>
