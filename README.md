@@ -27,7 +27,7 @@ A real-time network bandwidth monitor that displays upload and download speeds u
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/network-bandwidth-monitor.git
+   git clone https://github.com/mrevjd/network-bandwidth-monitor.git
    ```
 
 2. Place the files in your web server's directory
